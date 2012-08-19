@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Hufemap</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Laura Hilliger, Hufewiesen e.V.">
+
+    <!-- Le styles -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/interaction.css" rel="stylesheet">
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+  </head>
+
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+       <div class="span10" id="map">
+       		<div class="span8">
+       		</div>
+       		<div class="pull-right span4 well02">
+	       		<div class="rightBox">
+		       		<h4>So geht es</h4>
+		       		<ol>
+		       			<li>Wählen Sie ihre Bereiche auf der Karte. Nochmaliges klinken löscht die gewählten Bereich.</li>
+		       			<li>Füllen Sie das Formular aus*.</li>
+		       			<li>Schliessen Sie ihre Spende ab durch einen Klick auf den Paypal Button.</li>
+		       			<li>Ihr Bereich erscheint auf der Karte, sobald die Zahlung eingegangen ist.
+		       		</ol>
+		       		<p class="smallTOS">
+		       			* Emails werden nicht auf die Webseite veröffentlicht.<br/>
+		       			* Bitte die <a href="#" class="readMore">Allgemeinen Geschäftsbedingungen</a> beachten.
+		       		</p>
+	       		</div>
+       		</div>
+        </div>
+        <div class="span2">
+          <div class="well sidebar">
+          <div class="total">
+            <h4>Bereits Gespendet</h4>
+            	<div class="money">
+            		€5
+            	</div>
+            	<div class="readMore">
+            		<a href="#">Wie viel brauchen wir?</a>
+            	</div>
+            </div>
+            <div class="totalPixels">
+            	<h5>Ihre Spende</h5>
+            	<div id="donationSum">
+            	€0
+            	</div>
+            </div>
+            <div class="spendeForm">
+            <form>
+            <h6>Spender</h6>
+            <input type="text" value="Anonym" id="spender" title="ihr Name oder ihre Organization"/>
+            <h6>E-Mail</h6>
+            <input type="email" value="Ihre Email Adresse" title="Ein gültige E-mail" alt="hello"/>
+            <h6>Spendentext</h6>
+            <textarea>Ein Nachricht für Alle</textarea>
+            <h6>Link</h6>
+            <input type="url" value="http://www.hufewiesen.de" title="ein link"/><br/>
+            <input type="checkbox" style="float:left;margin-right:10px;"/> <p class="smallTOS">Ich habe die <a href="#">AGBs</a> gelesen und stimme zu.</p>
+            <button formaction="submit"><h6>Spenden!</h6></button>
+          
+            </form>
+            </div>
+          </div><!--/.well -->
+        </div><!--/span-->
+       
+      </div><!--/row-->
+
+    </div>
+    
+      <hr>
+
+      <footer>
+        <p>Hufewiesen e.V. </p>
+      </footer>
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="js/bootstrap.js"></script>
+	<script src="js/main.js"></script>
+  </body>
+</html>
