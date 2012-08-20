@@ -1,0 +1,10 @@
+{
+	"test": "test-value",
+	
+	"mongo" : {
+	    "address": "hs.mongodb",
+	    "host": "localhost",
+	    "port": 27017,
+	    "db_name": "hufespenden"    
+	}
+}

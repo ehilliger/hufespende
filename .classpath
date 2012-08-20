@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/hazelcast-2.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-core-asl-1.9.4.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.9.4.jar"/>
+	<classpathentry kind="lib" path="lib/netty-3.5.0.Final.jar"/>
+	<classpathentry kind="lib" path="lib/rhino-1.7R4.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-core-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-lang-java-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-platform-1.2.3.final.jar"/>
+	<classpathentry kind="output" path="org.hufewiesen.SpendenApp"/>
+</classpath>
