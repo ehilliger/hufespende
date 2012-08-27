@@ -1,10 +1,25 @@
 {
 	"test": "test-value",
 	
-	"mongo" : {
-	    "address": "hs.mongodb",
-	    "host": "localhost",
-	    "port": 27017,
-	    "db_name": "hufespenden"    
-	}
+	"mongodb" : {
+	    "address": 	"hs.db",
+	    "host": 	"localhost",
+	    "port": 	27017,
+	    "db_name": 	"hufespenden"    
+	},
+	
+	"sockJS_inbound" : [		
+		{ 
+			"address": "hs.db",
+			"match": 	 {
+				"action": "find",
+				"collection": "pixels"
+			}
+		},
+		{
+			"address": "hs.server"
+		}
+	],
+	
+	"sockJS_outbound" : [{}]
 }

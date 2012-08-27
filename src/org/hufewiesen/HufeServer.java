@@ -3,9 +3,11 @@ package org.hufewiesen;
 import java.util.logging.Logger;
 
 import org.vertx.java.core.Handler;
+import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.sockjs.SockJSServer;
 import org.vertx.java.deploy.Verticle;
 
 
@@ -16,8 +18,9 @@ public class HufeServer extends Verticle {
 	public void start() throws Exception {
 		JsonObject config = container.getConfig();
 		LOG.info("configuration: " + config);
+		LOG.info("test:" + config.getString("test"));
 		
-		container.deployModule("vertx.mongo-persistor-v1.0", config.getObject(""));
+		container.deployModule("vertx.mongo-persistor-v1.0", config.getObject("mongodb"));
 		
 		HttpServer server = vertx.createHttpServer();
 		
@@ -34,7 +37,33 @@ public class HufeServer extends Verticle {
 			}
 		});
 			
+		SockJSServer sockJS = vertx.createSockJSServer(server);
+		sockJS.bridge(
+				new JsonObject().putString("prefix", "/hufedb"), 
+				config.getArray("sockJS_inbound"), 
+				config.getArray("sockJS_outbound")
+		);
 		
+		
+//		vertx.eventBus().registerHandler("hs.db", new Handler<Message<JsonObject>>() {
+//
+//			@Override
+//			public void handle(Message<JsonObject> msg) {
+//				LOG.info("hs.db message: " + msg.body);
+//				
+//			}
+//			
+//		});
+		
+		vertx.eventBus().registerHandler("hs.server", new Handler<Message<JsonObject>>(){
+
+			@Override
+			public void handle(Message<JsonObject> msg) {
+				LOG.info("server message: " + msg.body);
+				
+			}
+			
+		});
 		
 		server.listen(8080);
 		
