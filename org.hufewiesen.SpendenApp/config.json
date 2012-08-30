@@ -16,8 +16,8 @@
 				"collection": "pixels"
 			}
 		},
-		{
-			"address": "hs.server"
+		{ 
+			"address": "client.pxreserved"
 		}
 	],
 	

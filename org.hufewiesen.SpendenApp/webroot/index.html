@@ -59,17 +59,17 @@
             	</div>
             </div>
             <div class="spendeForm">
-            <form>
+            <form id="spendenform" action="#">
             <h6>Spender</h6>
-            <input type="text" value="Anonym" id="spender" title="ihr Name oder ihre Organization"/>
+            <input id="name" type="text" value="Anonym" title="ihr Name oder ihre Organization"/>
             <h6>E-Mail</h6>
-            <input type="email" value="Ihre Email Adresse" title="Ein gültige E-mail" alt="hello"/>
+            <input id="email" type="email" value="Ihre Email Adresse" title="Ein gültige E-mail" alt="hello"/>
             <h6>Spendentext</h6>
-            <textarea>Ein Nachricht für Alle</textarea>
+            <textarea id="message">Ein Nachricht für Alle</textarea>
             <h6>Link</h6>
-            <input type="url" value="http://www.hufewiesen.de" title="ein link"/><br/>
+            <input id="url" type="url" value="http://www.hufewiesen.de" title="ein link"/><br/>
             <input type="checkbox" style="float:left;margin-right:10px;"/> <p class="smallTOS">Ich habe die <a href="#">AGBs</a> gelesen und stimme zu.</p>
-            <button formaction="submit"><h6>Spenden!</h6></button>
+            <button id="submitBtn" formaction="submit"><h6>Spenden!</h6></button>
           
             </form>
             </div>

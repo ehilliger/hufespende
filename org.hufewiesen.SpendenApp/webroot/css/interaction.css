@@ -28,6 +28,15 @@
 	margin: 1px 1px 0px 0px;
 }
 
+.pxreserved {
+	position:absolute;
+	background-color: #333;
+	opacity: 0.5;
+	width: 9px;
+	height: 9px;	
+	margin: 1px 1px 0px 0px;
+}
+
 .pxselected {
 	position:absolute;
 	background-color: #f88;

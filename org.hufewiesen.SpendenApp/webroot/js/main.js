@@ -14,11 +14,12 @@ $("#map").mouseover(function() {
 
 
 
-function drawBought(parent, boughtPixels) {	
+function drawPixels(parent, boughtPixels) {	
 	for(i in boughtPixels){
 		var px = boughtPixels[i];
-		console.log("drawing bought pixel: " + px + ", appending to: " + parent);
-		var pxDiv = $("<div class='pxbought'></div>");
+		// console.log("drawing bought pixel: " + px + ", appending to: " + parent);
+		
+		var pxDiv = $("<div class='px" + px.state + "'></div>");
 		parent.append(pxDiv);
 		pxDiv.css("left", px.x * 10);
 		pxDiv.css("top", px.y * 10);
@@ -39,18 +40,30 @@ function drawBought(parent, boughtPixels) {
 	}
 }
 
+function pixelsReserved(pixels) {
+	for(var i=0; i<pixels.length; i++) {
+		pixels[i].name="unknown";
+		pixels[i].state="reserved";
+	}
+	drawPixels($("#boughtPixels"), pixels);
+}
+
 function computeSelected() {
 	var sum = $(".pxselected").length * 12;
-	$("#donationSum").text("€" + sum);
+	$("#donationSum").text("€ " + sum);
 }
 
 var eb = null;
 function openEbConn() {
 	if (!eb) {
-		eb = new vertx.EventBus("http://localhost:8080/hufedb");
+		eb = new vertx.EventBus("http://192.168.178.23:8080/hufedb");
 
 		eb.onopen = function() {
 			console.log("EB connected...");
+			eb.registerHandler('client.pxreserved', function(msg, replyTo) {
+				console.log('pxreserved: ' + JSON.stringify(msg));
+				pixelsReserved(msg.pixels);
+			});
 			loadPixels();
 		};
 
@@ -67,12 +80,33 @@ function loadPixels() {
 		if(reply.status === 'ok') {
 			console.log("reply" + reply);
 			var bpParent = $("#boughtPixels");
-			drawBought(bpParent, reply.results);
+			drawPixels(bpParent, reply.results);
 		} else {
 			console.log("error getting DB entries")
 		}
 	});
 }
+
+function spendenFormSubmit() {
+	var form = $('#spendenform');
+	var msg = {
+			name: form.find('#name').val(),
+			email: form.find('#email').val(),
+			message: form.find('#message').val(),
+			url: form.find('#url').val(),
+			pixels: []
+	};
+	$('.pxselected').each(function(idx){
+		var px = {
+			x: $(this).css("left").replace(/[^-\d\.]/g, '') / 10, 
+			y: $(this).css("top").replace(/[^-\d\.]/g, '') / 10
+		};
+		console.log('px: ' + JSON.stringify(px));
+		msg.pixels.push(px);
+	});
+	console.log(JSON.stringify(msg));
+}
+
 
 
 $(document).ready(function() {
@@ -93,10 +127,17 @@ $(document).ready(function() {
 			});
 			$("#boughtPixels").append(selectedPx);
 			computeSelected();
+			eb.publish('client.pxreserved', {pixels: [{
+				x: $(this).css("left").replace(/[^-\d\.]/g, '') / 10,
+				y: $(this).css("top").replace(/[^-\d\.]/g, '') / 10
+			}]});
 		});
 	$("#hoverDiv").hide();
 	
+	
 	openEbConn();
+	
+	$('#spendenform #submitBtn').click(spendenFormSubmit);
 
 	// var bpParent = $("#boughtPixels");
 	// drawBought(bpParent, boughtPixels);
