@@ -22,6 +22,8 @@ public class HufeServer extends Verticle {
 		
 		container.deployModule("vertx.mongo-persistor-v1.0", config.getObject("mongodb"));
 		
+		HufeLogic logic = new HufeLogic(vertx);
+		
 		HttpServer server = vertx.createHttpServer();
 		
 				
@@ -44,26 +46,8 @@ public class HufeServer extends Verticle {
 				config.getArray("sockJS_outbound")
 		);
 		
-		
-//		vertx.eventBus().registerHandler("hs.db", new Handler<Message<JsonObject>>() {
-//
-//			@Override
-//			public void handle(Message<JsonObject> msg) {
-//				LOG.info("hs.db message: " + msg.body);
-//				
-//			}
-//			
-//		});
-		
-		vertx.eventBus().registerHandler("hs.server", new Handler<Message<JsonObject>>(){
 
-			@Override
-			public void handle(Message<JsonObject> msg) {
-				LOG.info("server message: " + msg.body);
-				
-			}
-			
-		});
+		vertx.eventBus().registerHandler("hs.server.submit", logic.getFormSubmitHandler());
 		
 		server.listen(8080);
 		

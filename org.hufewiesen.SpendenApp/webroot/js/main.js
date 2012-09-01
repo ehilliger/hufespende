@@ -24,7 +24,18 @@ function drawPixels(parent, boughtPixels) {
 		pxDiv.css("left", px.x * 10);
 		pxDiv.css("top", px.y * 10);
 		pxDiv.data("donator", px.name);
+		pxDiv.data("state", px.state);
+		
 		pxDiv.mouseover(function() {
+			var state = $(this).data('state');
+			if(state == 'reserved') {
+				$("#hoverDiv h3#hoverState").text("Reserviert durch:");
+			} else if(state === 'bought') {
+				$("#hoverDiv h3#hoverState").text("Gespendet durch:");
+			} else {
+				$("#hoverDiv h3#hoverState").text("Reserviert");
+			}
+			
 			$("#hoverDiv p#hoverName").text($(this).data("donator"));
 			$("#hoverDiv")
 				.css("left", $(this).css("left")).css("left", "+=25")
@@ -41,7 +52,7 @@ function drawPixels(parent, boughtPixels) {
 }
 
 function pixelsReserved(pixels) {
-	for(var i=0; i<pixels.length; i++) {
+	for(i in pixels) {
 		pixels[i].name="unknown";
 		pixels[i].state="reserved";
 	}
@@ -60,7 +71,7 @@ function openEbConn() {
 
 		eb.onopen = function() {
 			console.log("EB connected...");
-			eb.registerHandler('client.pxreserved', function(msg, replyTo) {
+			eb.registerHandler('hs.client.pxreserved', function(msg, replyTo) {
 				console.log('pxreserved: ' + JSON.stringify(msg));
 				pixelsReserved(msg.pixels);
 			});
@@ -105,6 +116,7 @@ function spendenFormSubmit() {
 		msg.pixels.push(px);
 	});
 	console.log(JSON.stringify(msg));
+	eb.publish('hs.server.submit', msg);
 }
 
 
@@ -113,7 +125,7 @@ $(document).ready(function() {
 	$("#map").append(""
 		+ "<div id='pixelCursor' class='pxcursor'></div>"
 		+ "<div id='boughtPixels'></div>"
-		+ "<div id='hoverDiv' class='pxhover'><h3>Gespendet durch</h3><p id='hoverName'></p></div>"
+		+ "<div id='hoverDiv' class='pxhover'><h3 id='hoverState'>Gespendet durch</h3><p id='hoverName'></p></div>"
 	);
 	$("#pixelCursor")
 		.hide()
@@ -127,7 +139,7 @@ $(document).ready(function() {
 			});
 			$("#boughtPixels").append(selectedPx);
 			computeSelected();
-			eb.publish('client.pxreserved', {pixels: [{
+			eb.publish('hs.client.pxreserved', {pixels: [{
 				x: $(this).css("left").replace(/[^-\d\.]/g, '') / 10,
 				y: $(this).css("top").replace(/[^-\d\.]/g, '') / 10
 			}]});
