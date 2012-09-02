@@ -12,51 +12,14 @@ $("#map").mouseover(function() {
 });
 
 
-
-
-function drawPixels(parent, boughtPixels) {	
-	for(i in boughtPixels){
-		var px = boughtPixels[i];
-		// console.log("drawing bought pixel: " + px + ", appending to: " + parent);
-		
-		var pxDiv = $("<div class='px" + px.state + "'></div>");
-		parent.append(pxDiv);
-		pxDiv.css("left", px.x * 10);
-		pxDiv.css("top", px.y * 10);
-		pxDiv.data("donator", px.name);
-		pxDiv.data("state", px.state);
-		
-		pxDiv.mouseover(function() {
-			var state = $(this).data('state');
-			if(state == 'reserved') {
-				$("#hoverDiv h3#hoverState").text("Reserviert durch:");
-			} else if(state === 'bought') {
-				$("#hoverDiv h3#hoverState").text("Gespendet durch:");
-			} else {
-				$("#hoverDiv h3#hoverState").text("Reserviert");
-			}
-			
-			$("#hoverDiv p#hoverName").text($(this).data("donator"));
-			$("#hoverDiv")
-				.css("left", $(this).css("left")).css("left", "+=25")
-				.css("top", $(this).css("top")).css("top", "-=25")
-				.show();
-		});
-		pxDiv.mouseout(function() {
-			$("#hoverDiv").hide();
-		});
-		pxDiv.click(function(evt) {
-			evt.stopPropagation();
-		});
+function drawPixels(parent, pixels) {	
+	for(i in pixels){
+		var p = pixels[i];
+		if(!(p instanceof Pixel)) {
+			p = new Pixel(p);
+		}
+		p.draw(parent);
 	}
-}
-
-function pixelsReserved(pixels) {
-	for(i in pixels) {
-		pixels[i].name="unknown";
-		pixels[i].state="reserved";
-	}
-	drawPixels($("#boughtPixels"), pixels);
 }
 
 function computeSelected() {
@@ -72,8 +35,8 @@ function openEbConn() {
 		eb.onopen = function() {
 			console.log("EB connected...");
 			eb.registerHandler('hs.client.pxreserved', function(msg, replyTo) {
-				console.log('pxreserved: ' + JSON.stringify(msg));
-				pixelsReserved(msg.pixels);
+				// console.log('pxreserved: ' + JSON.stringify(msg));
+				drawPixels($('#boughtPixels'), msg.pixels);
 			});
 			loadPixels();
 		};
@@ -89,9 +52,8 @@ function loadPixels() {
 	eb.send("hs.db", {action:"find", collection: "pixels", matcher: {}}, function(reply) {
 		console.log("got db result");
 		if(reply.status === 'ok') {
-			console.log("reply" + reply);
-			var bpParent = $("#boughtPixels");
-			drawPixels(bpParent, reply.results);
+			// console.log("reply:\n" + JSON.stringify(reply.results));
+			drawPixels($("#boughtPixels"), reply.results);
 		} else {
 			console.log("error getting DB entries")
 		}
@@ -107,13 +69,9 @@ function spendenFormSubmit() {
 			url: form.find('#url').val(),
 			pixels: []
 	};
-	$('.pxselected').each(function(idx){
-		var px = {
-			x: $(this).css("left").replace(/[^-\d\.]/g, '') / 10, 
-			y: $(this).css("top").replace(/[^-\d\.]/g, '') / 10
-		};
-		console.log('px: ' + JSON.stringify(px));
-		msg.pixels.push(px);
+	$('.pxselected').each(function(idx){		
+		console.log('px: ' + JSON.stringify($(this).data('px')));
+		msg.pixels.push($(this).data('px'));
 	});
 	console.log(JSON.stringify(msg));
 	eb.publish('hs.server.submit', msg);
@@ -130,19 +88,14 @@ $(document).ready(function() {
 	$("#pixelCursor")
 		.hide()
 		.click(function(){
-			// select pixel
-			var selectedPx = $(this).clone();
-			selectedPx.removeClass("pxcursor").addClass("pxselected");			
-			selectedPx.click(function(){
-				$(this).remove();
-				computeSelected();
-			});
-			$("#boughtPixels").append(selectedPx);
-			computeSelected();
-			eb.publish('hs.client.pxreserved', {pixels: [{
+			var px = new Pixel({
 				x: $(this).css("left").replace(/[^-\d\.]/g, '') / 10,
-				y: $(this).css("top").replace(/[^-\d\.]/g, '') / 10
-			}]});
+				y: $(this).css("top").replace(/[^-\d\.]/g, '') / 10,
+				state: 'selected'
+			});
+			px.draw($('#boughtPixels'));
+			computeSelected();
+			eb.publish('hs.client.pxreserved', {pixels: [px]});
 		});
 	$("#hoverDiv").hide();
 	
@@ -154,4 +107,75 @@ $(document).ready(function() {
 	// var bpParent = $("#boughtPixels");
 	// drawBought(bpParent, boughtPixels);
 });
+
+function Pixel(json) {
+	var pad = function(number, length) {
+		var n = '' + number;
+		while(n.length<length){n = '0' + n;}
+		return n;
+	}
+	if(json.x && json.y) {
+		this.x = json.x
+		this.y = json.y
+		this._id = pad(this.x, 4) + pad(this.y, 4);
+	} else if(json._id) {
+		this._id = pad(json._id, 8);
+		this.x = parseInt(this._id.replace(/(\d\d\d\d)(\d\d\d\d)/, '$1'));
+		this.y = parseInt(this._id.replace(/(\d\d\d\d)(\d\d\d\d)/, '$2'));
+	} else {
+		throw "invalid argument, neither coordinates nor _id";
+	}
+	this.name = json.name != null ? json.name : '';
+	this.message = json.message != null ? json.message : '';
+	this.url = json.url != null ? json.url : '';
+	this.state = json.state != null ? json.state : 'reserved';
+	// methods
+	if(!Pixel.prototype.getCssX) {
+		Pixel.prototype.getCssX = function() {
+			return '' + (this.x * 10) + 'px';
+		}
+	}
+	if(!Pixel.prototype.getCssY) {
+		Pixel.prototype.getCssY = function() {
+			return '' + (this.y * 10) + 'px';
+		}
+	}
+	if(!Pixel.prototype.draw) {
+		Pixel.prototype.draw = function(parent) {
+			var pxDiv = $(parent).find('#' + this._id);
+			if(!pxDiv || pxDiv.length == 0) {
+				pxDiv = $("<div id='" + this._id + "'/>");
+				$(parent).append(pxDiv);
+			}
+			pxDiv.removeClass("pxselected pxbought pxreserverd")
+				.addClass("px" + this.state)
+				.css("left", this.getCssX())
+				.css("top", this.getCssY())
+				.data("px", this)
+				.mouseover(function() {
+					var state = $(this).data('px').state;
+					if(state == 'reserved') {
+						$("#hoverDiv h3#hoverState").text("Reserviert durch:");
+					} else if(state === 'bought') {
+						$("#hoverDiv h3#hoverState").text("Gespendet durch:");
+					} else {
+						$("#hoverDiv h3#hoverState").text("Reserviert");
+					}
+					
+					$("#hoverDiv p#hoverName").text($(this).data("px").name);
+					$("#hoverDiv")
+						.css("left", $(this).css("left")).css("left", "+=25")
+						.css("top", $(this).css("top")).css("top", "-=25")
+						.show();
+				})
+				.mouseout(function() {
+					$("#hoverDiv").hide();
+				})
+				.click(function(evt) {
+					evt.stopPropagation();
+				});
+		}
+	}
+};
+
 
