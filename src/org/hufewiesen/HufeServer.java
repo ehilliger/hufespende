@@ -80,6 +80,8 @@ public class HufeServer extends Verticle {
 		vertx.eventBus().registerHandler("hs.server.pxUpdate", logic.getPxUpdateHanlder());
 		vertx.eventBus().registerHandler("hs.server.loadPixels", logic.getLoadPixelsHandler());
 		
+		vertx.setPeriodic(1000, logic.getPxUpdateCleanup());
+		
 		server.listen(8080);
 		
 		

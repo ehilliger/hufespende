@@ -1,5 +1,6 @@
 {
 	"serverUrl": "http://map.hufewiesen.com:8080",
+	"pixelTimout": 60000,
 	
 	"mongodb" : {
 	    "address": 	"hs.db",

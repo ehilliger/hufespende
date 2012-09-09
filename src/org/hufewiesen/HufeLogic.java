@@ -1,6 +1,7 @@
 package org.hufewiesen;
 
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -101,7 +102,7 @@ public class HufeLogic {
 						if(px instanceof JsonObject) {
 							String id = ((JsonObject) px).getString("_id");
 							Boolean visible = ((JsonObject) px).getBoolean("visible");
-							((JsonObject) px).putString("state", "reserved");
+							((JsonObject) px).putNumber("timestamp", System.currentTimeMillis());
 							if(id != null && visible != null && visible) {
 								vertx.sharedData().getMap("pxUpdates").put(id, ((JsonObject) px).encode());								
 							} else {
@@ -113,6 +114,36 @@ public class HufeLogic {
 					vertx.eventBus().publish("hs.client.pxUpdate", pxUpdate.body);
 				}
 				
+				
+			}
+			
+		};
+	}
+	
+	public Handler<Long> getPxUpdateCleanup() {
+		return new Handler<Long>(){
+			@Override
+			public void handle(Long arg0) {
+				long timeout = config.getLong("pixelTimout");
+				Map pxUpdates = vertx.sharedData().getMap("pxUpdates");
+				JsonArray updates = new JsonArray();
+				for(Object key : pxUpdates.keySet()) {
+					Object pxValue = pxUpdates.get(key);
+					if(pxValue instanceof String) {
+						JsonObject px = new JsonObject(pxValue.toString());
+						Long timestamp = px.getLong("timestamp");
+						if(timestamp != null && timestamp < System.currentTimeMillis() - timeout) {
+							px.putBoolean("visible", false);
+							updates.add(px);
+							pxUpdates.remove(key);
+						}
+					}
+				}
+				
+				if(updates.size() > 0) {
+					LOG.info("resetting reserved pixels: " + updates.size());
+					vertx.eventBus().publish("hs.client.pxUpdate", new JsonObject().putArray("pixels", updates));
+				}
 				
 			}
 			

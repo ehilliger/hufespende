@@ -18,8 +18,16 @@ function drawPixels(parent, pixels) {
 		var p = pixels[i];
 		if(!(p instanceof Pixel)) {
 			p = new Pixel(p);
+			//console.log("drawing pixel: " + JSON.stringify(p));
+			if(p.clientId != session && p.state == 'selected') {
+				p.state = 'reserved';
+			}
+			if(p.visible) {
+				p.draw(parent);
+			} else {
+				p.remove(parent);
+			}
 		}
-		p.draw(parent);
 	}
 }
 
@@ -38,21 +46,7 @@ function openEbConn() {
 			console.log("EB connected...");
 			eb.registerHandler('hs.client.pxUpdate', function(msg, replyTo) {
 				// console.log('pxreserved: ' + JSON.stringify(msg));
-				var pxs = [];
-				$(msg.pixels).each(function(i){
-					// don't process our own pixels
-					if(this.clientId != session) {
-						if(this.visible) {
-							this.state='reserved';
-							pxs.push(this);	
-						} else {
-							var px = new Pixel(this);
-							px.remove($('#boughtPixels'));
-						}
-						
-					}
-				});
-				drawPixels($('#boughtPixels'), pxs);
+				drawPixels($('#boughtPixels'), msg.pixels);
 			});
 			loadPaypalCfg();
 			loadPixels();
@@ -80,7 +74,7 @@ function loadPixels() {
 function loadPaypalCfg() {
 	eb.send("hs.server.paypalCfg", {test:"test"}, function(reply) {		
 		var token = reply.token;
-		console.log("paypal token: " + token);
+		// console.log("paypal token: " + token);
 		$("#spendenform").attr("action", reply.checkoutUrl);
 		
 	});
@@ -96,10 +90,10 @@ function spendenFormSubmit() {
 			pixels: []
 	};
 	$('.pxselected').each(function(idx){		
-		console.log('px: ' + JSON.stringify($(this).data('px')));
+		// console.log('px: ' + JSON.stringify($(this).data('px')));
 		msg.pixels.push($(this).data('px'));
 	});
-	console.log(JSON.stringify(msg));
+	// console.log(JSON.stringify(msg));
 	eb.publish('hs.server.submit', msg);
 }
 
@@ -128,18 +122,22 @@ $(document).ready(function() {
 			var px = new Pixel({
 				x: $(this).css("left").replace(/[^-\d\.]/g, '') / 10,
 				y: $(this).css("top").replace(/[^-\d\.]/g, '') / 10,
-			}).findPixel(parent);
-			if(px.isVisible(parent) && px.state == 'selected') {
-				px.remove($('#boughtPixels'));
-				computeSelected();
-				eb.publish('hs.server.pxUpdate', {pixels: [px]});
-			} else if(!px.isVisible(parent)) {
+				clientId: session
+			});
+			var expx = px.findPixel(parent);
+
+			if(expx == null) {
 				px.state = 'selected';
-				px.draw($('#boughtPixels'));	
-				px.clientId = session;
-				computeSelected();
+				px.visible = true;
+				// console.log("requesting pixel: " + JSON.stringify(px));			
 				eb.publish('hs.server.pxUpdate', {pixels: [px]});
-			}
+			} else {
+				if(expx.clientId == px.clientId) {
+					// console.log("freeing pixel: " + JSON.stringify(px));
+					px.visible = false;
+					eb.publish('hs.server.pxUpdate', {pixels: [px]});
+				}
+			}	
 		});
 	$("#hoverDiv").hide();
 	
@@ -174,6 +172,7 @@ function Pixel(json) {
 	this.message = json.message != null ? json.message : '';
 	this.url = json.url != null ? json.url : '';
 	this.state = json.state != null ? json.state : 'reserved';
+	this.clientId = json.clientId != null ? json.clientId : null;
 	// methods
 	if(!Pixel.prototype.getCssX) {
 		Pixel.prototype.getCssX = function() {
@@ -251,7 +250,7 @@ function Pixel(json) {
 			if(pxDiv && pxDiv.length > 0) {
 				return $(pxDiv[0]).data("px");
 			}
-			return this;
+			return null;
 		}
 	}
 };
