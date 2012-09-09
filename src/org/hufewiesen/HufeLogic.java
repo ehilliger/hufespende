@@ -1,24 +1,32 @@
 package org.hufewiesen;
 
 import java.util.List;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.eventbus.Message;
+import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.http.HttpClientRequest;
+import org.vertx.java.core.http.HttpClientResponse;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 
 public class HufeLogic {
 	private static final Logger LOG = Logger.getLogger(HufeLogic.class.getName());
 	private Vertx vertx;
+	private JsonObject config;
+	private PaypalConnector paypalConnector;
 	
-	// private Mongo mongo;
-	// private DB db;
 	
-	
-	public HufeLogic(Vertx vertx) {
+	public HufeLogic(Vertx vertx, JsonObject config, PaypalConnector paypal) {
 		this.vertx = vertx;
+		this.config = config;
+		this.paypalConnector = paypal;
 		
 	}
 	
@@ -79,5 +87,96 @@ public class HufeLogic {
 			
 		};
 	}
+	
+	public Handler<Message<JsonObject>> getPxUpdateHanlder() {
+		return new Handler<Message<JsonObject>>(){
 
+			@Override
+			public void handle(Message<JsonObject> pxUpdate) {
+				JsonArray pixels = pxUpdate.body.getArray("pixels");
+				LOG.info("pixel udpate: " + pixels);
+				if(pixels != null) {
+					// update server state
+					for(Object px : pixels) {
+						if(px instanceof JsonObject) {
+							String id = ((JsonObject) px).getString("_id");
+							Boolean visible = ((JsonObject) px).getBoolean("visible");
+							((JsonObject) px).putString("state", "reserved");
+							if(id != null && visible != null && visible) {
+								vertx.sharedData().getMap("pxUpdates").put(id, ((JsonObject) px).encode());								
+							} else {
+								vertx.sharedData().getMap("pxUpdates").remove(id);
+							}
+						}
+					}
+					// update clients
+					vertx.eventBus().publish("hs.client.pxUpdate", pxUpdate.body);
+				}
+				
+				
+			}
+			
+		};
+	}
+	
+	public Handler<Message<JsonObject>> getLoadPixelsHandler() {
+		return new Handler<Message<JsonObject>>(){
+
+			@Override
+			public void handle(final Message<JsonObject> msg) {
+				JsonObject query = new JsonObject()
+					.putString("action", "find")
+					.putString("collection", "pixels")
+					.putObject("matcher", new JsonObject());
+				// LOG.info("querying DB: " + query.encode());
+				vertx.eventBus().send("hs.db", query, new Handler<Message<JsonObject>>(){
+
+					@Override
+					public void handle(Message<JsonObject> reply) {
+						// LOG.info("db result: " + reply.body.encode());
+						if(reply.body.getString("status").equals("ok")) {
+							
+							// add pxUpdates to results
+							for(Object px : vertx.sharedData().getMap("pxUpdates").values()) {
+								reply.body.getArray("results").add(new JsonObject(px.toString()));
+							}
+						}
+						msg.reply(reply.body);						
+					}
+					
+				});
+				
+			}
+			
+		};
+	}
+	
+	public Handler<Message<JsonObject>> getPaypalConfigHandler() {
+		return new Handler<Message<JsonObject>>() {
+
+			@Override
+			public void handle(final Message<JsonObject> msg) {
+				
+				paypalConnector.setExpressCheckout(
+					new JsonObject()
+						.putString("AMT", "10")
+						.putString("cancelUrl", config.getString("serverUrl"))
+						.putString("returnUrl", config.getString("serverUrl")), 
+					new Handler<JsonObject>(){
+						@Override
+						public void handle(JsonObject paypalResponse) {
+							String token = paypalResponse.getString("TOKEN");
+							LOG.info("received PaypalToken: " + token);
+							JsonObject reply = new JsonObject();
+							reply.putString("token", token)
+								.putString("checkoutUrl", paypalConnector.getCheckoutUrl(token));
+							msg.reply(reply);
+							
+						}
+					});
+				
+			}
+			
+		};
+	}
 }

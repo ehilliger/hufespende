@@ -11,6 +11,7 @@ $("#map").mouseover(function() {
 	$("#map").mousemove(null);
 });
 
+var session = null;
 
 function drawPixels(parent, pixels) {	
 	for(i in pixels){
@@ -30,14 +31,30 @@ function computeSelected() {
 var eb = null;
 function openEbConn() {
 	if (!eb) {
-		eb = new vertx.EventBus("http://192.168.178.23:8080/hufedb");
-
+		// eb = new vertx.EventBus("http://192.168.178.23:8080/hufedb");
+		eb = new vertx.EventBus("http://localhost:8080/hufedb");
+		
 		eb.onopen = function() {
 			console.log("EB connected...");
-			eb.registerHandler('hs.client.pxreserved', function(msg, replyTo) {
+			eb.registerHandler('hs.client.pxUpdate', function(msg, replyTo) {
 				// console.log('pxreserved: ' + JSON.stringify(msg));
-				drawPixels($('#boughtPixels'), msg.pixels);
+				var pxs = [];
+				$(msg.pixels).each(function(i){
+					// don't process our own pixels
+					if(this.clientId != session) {
+						if(this.visible) {
+							this.state='reserved';
+							pxs.push(this);	
+						} else {
+							var px = new Pixel(this);
+							px.remove($('#boughtPixels'));
+						}
+						
+					}
+				});
+				drawPixels($('#boughtPixels'), pxs);
 			});
+			loadPaypalCfg();
 			loadPixels();
 		};
 
@@ -49,14 +66,23 @@ function openEbConn() {
 }
 
 function loadPixels() {
-	eb.send("hs.db", {action:"find", collection: "pixels", matcher: {}}, function(reply) {
+	eb.send("hs.server.loadPixels", {}, function(reply) {
 		console.log("got db result");
 		if(reply.status === 'ok') {
-			// console.log("reply:\n" + JSON.stringify(reply.results));
+			// console.log("reply:\n" + JSON.stringify(reply.results));			
 			drawPixels($("#boughtPixels"), reply.results);
 		} else {
 			console.log("error getting DB entries")
 		}
+	});
+}
+
+function loadPaypalCfg() {
+	eb.send("hs.server.paypalCfg", {test:"test"}, function(reply) {		
+		var token = reply.token;
+		console.log("paypal token: " + token);
+		$("#spendenform").attr("action", reply.checkoutUrl);
+		
 	});
 }
 
@@ -77,6 +103,16 @@ function spendenFormSubmit() {
 	eb.publish('hs.server.submit', msg);
 }
 
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
 
 
 $(document).ready(function() {
@@ -88,24 +124,32 @@ $(document).ready(function() {
 	$("#pixelCursor")
 		.hide()
 		.click(function(){
+			var parent = $('#boughtPixels');
 			var px = new Pixel({
 				x: $(this).css("left").replace(/[^-\d\.]/g, '') / 10,
 				y: $(this).css("top").replace(/[^-\d\.]/g, '') / 10,
-				state: 'selected'
-			});
-			px.draw($('#boughtPixels'));
-			computeSelected();
-			eb.publish('hs.client.pxreserved', {pixels: [px]});
+			}).findPixel(parent);
+			if(px.isVisible(parent) && px.state == 'selected') {
+				px.remove($('#boughtPixels'));
+				computeSelected();
+				eb.publish('hs.server.pxUpdate', {pixels: [px]});
+			} else if(!px.isVisible(parent)) {
+				px.state = 'selected';
+				px.draw($('#boughtPixels'));	
+				px.clientId = session;
+				computeSelected();
+				eb.publish('hs.server.pxUpdate', {pixels: [px]});
+			}
 		});
 	$("#hoverDiv").hide();
 	
 	
 	openEbConn();
 	
-	$('#spendenform #submitBtn').click(spendenFormSubmit);
+	// $('#spendenform #submitBtn').click(spendenFormSubmit);
 
-	// var bpParent = $("#boughtPixels");
-	// drawBought(bpParent, boughtPixels);
+	
+	session = getCookie("hsid");
 });
 
 function Pixel(json) {
@@ -125,6 +169,7 @@ function Pixel(json) {
 	} else {
 		throw "invalid argument, neither coordinates nor _id";
 	}
+	this.visible = json.visible != null ? json.visible : false;
 	this.name = json.name != null ? json.name : '';
 	this.message = json.message != null ? json.message : '';
 	this.url = json.url != null ? json.url : '';
@@ -142,6 +187,7 @@ function Pixel(json) {
 	}
 	if(!Pixel.prototype.draw) {
 		Pixel.prototype.draw = function(parent) {
+			this.visible = true;
 			var pxDiv = $(parent).find('#' + this._id);
 			if(!pxDiv || pxDiv.length == 0) {
 				pxDiv = $("<div id='" + this._id + "'/>");
@@ -154,7 +200,8 @@ function Pixel(json) {
 				.data("px", this)
 				.mouseover(function() {
 					var state = $(this).data('px').state;
-					if(state == 'reserved') {
+					var name = $(this).data('px').name;
+					if(state == 'reserved' && name && name.length > 0) {
 						$("#hoverDiv h3#hoverState").text("Reserviert durch:");
 					} else if(state === 'bought') {
 						$("#hoverDiv h3#hoverState").text("Gespendet durch:");
@@ -171,9 +218,40 @@ function Pixel(json) {
 				.mouseout(function() {
 					$("#hoverDiv").hide();
 				})
-				.click(function(evt) {
-					evt.stopPropagation();
+				.click(function() {
+					$("#pixelCursor").trigger('click');
 				});
+				
+		}
+	}
+	if(!Pixel.prototype.remove) {
+		Pixel.prototype.remove = function(parent) {
+			var pxDiv = $(parent).find('#' + this._id);
+			if(pxDiv && pxDiv.length > 0) {
+				pxDiv.remove();
+				this.visible = false;
+			}
+		}
+	}
+	if(!Pixel.prototype.isVisible) {
+		Pixel.prototype.isVisible = function(parent) {
+			var pxDiv = $(parent).find('#' + this._id);
+			if(pxDiv && pxDiv.length > 0) {
+				this.visible = true;
+			} else {
+				this.visible = false;
+			}
+			return this.visible;
+
+		}
+	}
+	if(!Pixel.prototype.findPixel) {
+		Pixel.prototype.findPixel = function(parent) {
+			var pxDiv = $(parent).find('#' + this._id);
+			if(pxDiv && pxDiv.length > 0) {
+				return $(pxDiv[0]).data("px");
+			}
+			return this;
 		}
 	}
 };
