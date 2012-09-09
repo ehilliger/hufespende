@@ -10,5 +10,6 @@
 	<classpathentry kind="lib" path="lib/vertx-core-1.2.3.final.jar"/>
 	<classpathentry kind="lib" path="lib/vertx-lang-java-1.2.3.final.jar"/>
 	<classpathentry kind="lib" path="lib/vertx-platform-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/mongo-2.9.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
