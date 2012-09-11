@@ -21,7 +21,7 @@ function drawPixels(parent, pixels) {
 }
 
 function computeSelected() {
-	var sum = $(".pxselected").length * 12;
+	var sum = $(".pxselected").length * 5;
 	$("#donationSum").text("€ " + sum);
 }
 
@@ -69,7 +69,7 @@ function loadPaypalCfg() {
 	});
 }
 
-function spendenFormSubmit(evt) {
+function spendenFormSubmit() {
 	console.log("form submit");
 	var form = $('#spendenform');
 	var msg = {
@@ -90,13 +90,17 @@ function spendenFormSubmit(evt) {
 		
 	}
 	// console.log(JSON.stringify(msg));
-	// eb.publish('hs.server.submit', msg);
-	// evt.preventDefault();
-	url = 'http://www.kiwigrid.de';
-    $("#paypalDiv").dialog("open");
-    $("#paypalIFrame").attr('src',  url);
-    return false
-	
+	eb.send('hs.server.submit', msg, function(reply){
+		if(reply.status && reply.status == 'ok') {
+			// $('#paypalIFrame').attr('src', reply.checkoutUrl);
+			// $("#paypalDiv").dialog("open");
+			document.location = reply.checkoutUrl;
+		} else {
+			alert("error: " + reply.error);
+		}
+			
+	});	
+    return false;	
 }
 
 function getCookie(name) {

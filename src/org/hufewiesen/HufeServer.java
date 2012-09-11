@@ -75,12 +75,13 @@ public class HufeServer extends Verticle {
 		);
 		
 
-		vertx.eventBus().registerHandler("hs.server.submit", logic.getFormSubmitHandler());
-		vertx.eventBus().registerHandler("hs.server.paypalCfg", logic.getPaypalConfigHandler());
+		vertx.eventBus().registerHandler("hs.server.submit", logic.getFormSubmitHandler());		
 		vertx.eventBus().registerHandler("hs.server.pxUpdate", logic.getPxUpdateHanlder());
 		vertx.eventBus().registerHandler("hs.server.loadPixels", logic.getLoadPixelsHandler());
 		
 		vertx.setPeriodic(1000, logic.getPxUpdateCleanup());
+		vertx.setPeriodic(120000, logic.getBuyerInfoTxHandler());
+		vertx.setPeriodic(5000, logic.getCapturePaymentTxHandler());
 		
 		server.listen(8080);
 		

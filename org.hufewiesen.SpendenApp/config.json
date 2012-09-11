@@ -13,7 +13,7 @@
 		"server": 			"api-3t.sandbox.paypal.com",
 		"port":				443,
 		"api":		        "/nvp",
-		"checkout":			"https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=",
+		"checkoutUrl":			"https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=",
 		"api_user": 		"hufe_1347120633_biz_api1.gmail.com",
 		"api_pwd": 			"1347120657",
 		"api_sgn":			"An5ns1Kso7MWUdW4ErQKJJJ4qi4-A9R-F7z.lMW6Mq7PZ4q4.EUw9.v1"

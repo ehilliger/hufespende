@@ -70,6 +70,10 @@ public class DBPixel extends JsonObject {
 		putString("url", url);
 	}
 	
+	public String getId() {
+		return getString("_id");
+	}
+	
 	public static List<DBPixel> fromResult(JsonArray result) {
 		List<DBPixel> pixels = new ArrayList<DBPixel>();
 		Iterator<Object> resultIt = result.iterator();

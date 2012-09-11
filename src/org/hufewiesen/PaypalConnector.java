@@ -57,6 +57,16 @@ public class PaypalConnector extends BusModBase {
 		doPaypalCall(formData, responseBodyHandler);
 	}
 	
+	public void getExpressCheckoutDetails(JsonObject formData, final Handler<JsonObject> responseBodyHandler) {
+		formData.putString("METHOD", "GetExpressCheckoutDetails");
+		doPaypalCall(formData, responseBodyHandler);
+	}
+	
+	public void doExpressCheckoutPayment(JsonObject formData, final Handler<JsonObject> responseBodyHandler) {
+		formData.putString("METHOD", "GetExpressCheckoutDetails");
+		doPaypalCall(formData, responseBodyHandler);
+	}
+	
 	private PaypalConnector doPaypalCall(JsonObject  formData, final Handler<JsonObject> responseBodyHandler) {
 		HttpClientRequest req =	client.post(paypalCfg.getString("api"), new Handler<HttpClientResponse>(){
 
@@ -101,9 +111,9 @@ public class PaypalConnector extends BusModBase {
 			// .putString("AMT", "10")
 			);
 		
-		if(logger.isDebugEnabled()) {
+		// if(logger.isDebugEnabled()) {
 			logger.debug("sending Paypal form: " + form);
-		}
+		// }
 		
 		req
 			.putHeader("Content-Length", form.length())
