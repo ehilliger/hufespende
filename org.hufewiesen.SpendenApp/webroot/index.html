@@ -61,16 +61,23 @@
             <div class="spendeForm">
             <form id="spendenform" action="#">
             <h6>Spender</h6>
-            <input id="name" type="text" value="Anonym" title="ihr Name oder ihre Organisation"/>
+            <div class="control-group">
+            	<input id="name" type="text" placeholder="Anonym" title="ihr Name oder ihre Organisation" class="required"/>
+            </div>
             <h6>E-Mail</h6>
-            <input id="email" type="email" value="Ihre Email Adresse" title="Ein gültige E-mail" alt="hello"/>
+            <div class="control-group">
+            	<input id="email" type="email" placeholder="Ihre Email Adresse" title="Ein gültige E-mail" alt="hello" class="required email"/>
+            </div>
             <h6>Spendentext</h6>
-            <textarea id="message">Eine Nachricht für Alle</textarea>
+            <textarea id="message" placeholder="Eine Nachricht für alle"></textarea>
             <h6>Link</h6>
-            <input id="url" type="url" value="http://www.hufewiesen.de" title="Ein Link"/><br/>
-            <input type="checkbox" style="float:left;margin-right:10px;"/> <p class="smallTOS">Ich habe die <a href="#">AGBs</a> gelesen und stimme zu.</p>
+            <input id="url" type="url" placeholder="http://ihr.link.de" title="Ein Link"/><br/>
+            <div class="control-group">
+            	<input id="AGB" type="checkbox" style="float:left;margin-right:10px;"/> <p class="smallTOS">Ich habe die <a href="#">AGBs</a> gelesen und stimme zu.</p>
+            </div>
+            <div class="control-group">
             <button id="submitBtn" formaction="submit"><h6>Spenden!</h6></button>
-          
+          	</div>
             </form>
             </div>
           </div><!--/.well -->
@@ -91,6 +98,7 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script src="js/bootstrap.js"></script>
+    <script src="js/jquery.validate.js"></script>
     <script src="http://cdn.sockjs.org/sockjs-0.2.1.min.js"></script>    
     <script src="js/vertxbus.js"><</script>
 	<script src="js/main.js"></script>

@@ -1,15 +1,4 @@
-$("#map").mouseover(function() {
-	$('#pixelCursor').show();
-	$("#map").mousemove(function (evt){
-		$('#pixelCursor')
-			.css("top", (evt.pageY - (evt.pageY % 10)) + "px")
-		 	.css("left", (evt.pageX - (evt.pageX % 10)) + "px");
 
-	});
-}).mouseout(function() {
-	$('#pixelCursor').hide();
-	$("#map").mousemove(null);
-});
 
 var session = null;
 
@@ -90,10 +79,7 @@ function spendenFormSubmit(evt) {
 			url: form.find('#url').val(),
 			pixels: []
 	};
-	if(!name || name.length == 0 || name == "Anonym" ) {
-		form.find('#name').addClass("error").attr('title', "Einen Namen, bitte.");
-		console.log('error: no name');
-	}
+	
 	var selectedPixels = $('.pxselected');
 	if(selectedPixels.length == 0) {
 		alert('Sie haben keine Pixel ausgewählt.');
@@ -106,6 +92,7 @@ function spendenFormSubmit(evt) {
 	// console.log(JSON.stringify(msg));
 	// eb.publish('hs.server.submit', msg);
 	// evt.preventDefault();
+	return true;
 }
 
 function getCookie(name) {
@@ -125,7 +112,19 @@ $(document).ready(function() {
 		+ "<div id='pixelCursor' class='pxcursor'></div>"
 		+ "<div id='boughtPixels'></div>"
 		+ "<div id='hoverDiv' class='pxhover'><h3 id='hoverState'>Gespendet durch</h3><p id='hoverName'></p></div>"
-	);
+	).mouseover(function() {
+		$('#pixelCursor').show();
+		$("#map").mousemove(function (evt){
+			$('#pixelCursor')
+				.css("top", (evt.pageY - (evt.pageY % 10)) + "px")
+			 	.css("left", (evt.pageX - (evt.pageX % 10)) + "px");
+
+		});
+	}).mouseout(function() {
+		$('#pixelCursor').hide();
+		$("#map").mousemove(null);
+	});
+	
 	$("#pixelCursor")
 		.hide()
 		.click(function(){
@@ -140,6 +139,8 @@ $(document).ready(function() {
 			if(expx == null) {
 				px.state = 'selected';
 				px.visible = true;
+				jQuery('#spendenform #submitBtn').next('.help-inline').remove();
+                jQuery('#spendenform #submitBtn').parents('.control-group').removeClass('error');
 				// console.log("requesting pixel: " + JSON.stringify(px));			
 				eb.publish('hs.server.pxUpdate', {pixels: [px]});
 			} else {
@@ -154,9 +155,24 @@ $(document).ready(function() {
 	
 	
 	openEbConn();
+	$('#spendenform #name').validate({
+		expression: "if(VAL != '') return true; else return false;",
+		message: "Bitte einen Namen eingeben"});
+	$('#spendenform #email').validate({
+		expression: "if(VAL != '') return true; else return false;",
+		type: "email",
+		message: "Bitte eine Email Adresse angeben"
+		});
+	$('#spendenform #AGB').validate({
+		expression: "return $('#spendenform #AGB').attr('checked') != undefined;",
+		message: "Bitte stimmen sie den AGBs zu"
+		});
+	$('#spendenform #submitBtn').validate({
+		expression: "return $('.pxselected').length > 0",
+		message: "Sie haben keine Pixel geählt"
+	});
+	$('#spendenform').validated(spendenFormSubmit);
 	
-	$('#spendenform #submitBtn').click(spendenFormSubmit);
-
 	
 	session = getCookie("hsid");
 });
