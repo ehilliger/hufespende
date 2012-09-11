@@ -169,7 +169,7 @@ $(document).ready(function() {
 		});
 	$('#spendenform #submitBtn').validate({
 		expression: "return $('.pxselected').length > 0",
-		message: "Sie haben keine Pixel geählt"
+		message: "Sie haben keine Pixel gewählt"
 	});
 	$('#spendenform').validated(spendenFormSubmit);
 	
