@@ -48,7 +48,7 @@ function openEbConn() {
 				// console.log('pxreserved: ' + JSON.stringify(msg));
 				drawPixels($('#boughtPixels'), msg.pixels);
 			});
-			loadPaypalCfg();
+			// loadPaypalCfg();
 			loadPixels();
 		};
 
@@ -80,7 +80,8 @@ function loadPaypalCfg() {
 	});
 }
 
-function spendenFormSubmit() {
+function spendenFormSubmit(evt) {
+	console.log("form submit");
 	var form = $('#spendenform');
 	var msg = {
 			name: form.find('#name').val(),
@@ -89,12 +90,22 @@ function spendenFormSubmit() {
 			url: form.find('#url').val(),
 			pixels: []
 	};
-	$('.pxselected').each(function(idx){		
-		// console.log('px: ' + JSON.stringify($(this).data('px')));
-		msg.pixels.push($(this).data('px'));
-	});
+	if(!name || name.length == 0 || name == "Anonym" ) {
+		form.find('#name').addClass("error").attr('title', "Einen Namen, bitte.");
+		console.log('error: no name');
+	}
+	var selectedPixels = $('.pxselected');
+	if(selectedPixels.length == 0) {
+		alert('Sie haben keine Pixel ausgewählt.');
+	} else {
+		selectedPixels.each(function(idx){		
+			msg.pixels.push($(this).data('px'));
+		});
+		
+	}
 	// console.log(JSON.stringify(msg));
-	eb.publish('hs.server.submit', msg);
+	// eb.publish('hs.server.submit', msg);
+	// evt.preventDefault();
 }
 
 function getCookie(name) {
@@ -144,7 +155,7 @@ $(document).ready(function() {
 	
 	openEbConn();
 	
-	// $('#spendenform #submitBtn').click(spendenFormSubmit);
+	$('#spendenform #submitBtn').click(spendenFormSubmit);
 
 	
 	session = getCookie("hsid");
