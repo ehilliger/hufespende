@@ -46,3 +46,5 @@
 	margin: 1px 1px 0px 0px;
 }
 
+.ui-widget-overlay {background:#333; opacity: .7;filter:Alpha(Opacity=70); }
+

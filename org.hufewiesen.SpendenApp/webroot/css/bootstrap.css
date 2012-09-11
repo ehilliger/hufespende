@@ -1264,6 +1264,7 @@ input[type="checkbox"][readonly] {
 .control-group.error .help-block,
 .control-group.error .help-inline {
   color: #b94a48;
+  font-size: 10px;
 }
 .control-group.error .checkbox,
 .control-group.error .radio,

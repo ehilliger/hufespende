@@ -92,7 +92,11 @@ function spendenFormSubmit(evt) {
 	// console.log(JSON.stringify(msg));
 	// eb.publish('hs.server.submit', msg);
 	// evt.preventDefault();
-	return true;
+	url = 'http://www.kiwigrid.de';
+    $("#paypalDiv").dialog("open");
+    $("#paypalIFrame").attr('src',  url);
+    return false
+	
 }
 
 function getCookie(name) {
@@ -167,11 +171,28 @@ $(document).ready(function() {
 		expression: "return $('#spendenform #AGB').attr('checked') != undefined;",
 		message: "Bitte stimmen sie den AGBs zu"
 		});
+	$('#spendenform #AGB').click(function (evt){
+		if($(this).attr('checked')) {
+			jQuery('#spendenform #AGB').next('.help-inline').remove();
+            jQuery('#spendenform #AGB').parents('.control-group').removeClass('error');
+		}
+	});
 	$('#spendenform #submitBtn').validate({
 		expression: "return $('.pxselected').length > 0",
 		message: "Sie haben keine Pixel gewählt"
 	});
+	
 	$('#spendenform').validated(spendenFormSubmit);
+	
+	$("#paypalDiv").dialog({
+        modal: true,
+        autoOpen: false,
+        height: '400',
+        width: '500',
+        draggable: true,
+        resizeable: true,   
+        title: 'Bezahlen mit Paypal'
+    });
 	
 	
 	session = getCookie("hsid");
