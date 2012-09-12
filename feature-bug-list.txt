@@ -1,0 +1,25 @@
+Features:
+- Übersichtskarte mit Bereichen
+- Jeder Bereich öffnet rechteckiges Bild 
+- Mehr Bezahlintegration (Kreditkarte / Bankeinzug, was immer über Paypal möglich)
+- Offline Spenden über Kontakt-Email (Sie möchten auf anderem Weg spenden? Nehmen Sie Kontakt mit uns auf).
+- Checkbox für SpendenQuittung
+- Dankeschön Email an Spender mit PDF und Details zur Spende (automatisch???)
+- Report über Spenden Txn
+- SSL Certificate für https://spenden.hufewiesen.de
+
+Bugs:
+- DB backup
+- Adresse in TxRecord abspeichern
+- Batch-Size / Limit
+- Token confirm
+- Pixel außerhalb Bild möglich
+- Spenden Summe
+- Spendenbetrag
+- Teilnahmebedingungen anstatt AGB
+- Paypal Logo anstatt des Spenden-Button
+- Link zu Paypal Registrierung
+
+zur Info:
+aktueller Fortschritt zu sehen unter:
+https://github.com/ehilliger/hufespende/graphs/code-frequency
