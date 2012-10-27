@@ -20,7 +20,14 @@
 	},
 		
 	
-	"sockJS_inbound" : [				
+	"sockJS_inbound" : [			
+		{ 
+			"address": "hs.db",
+			"match": 	 {
+				"action": "find",
+				"collection": "pixels"
+			}
+		},			
 		{ 
 			"address": "hs.client.pxreserved"
 		},
@@ -34,7 +41,7 @@
 			"address": "hs.server.pxUpdate"
 		},
 		{ 
-			"address": "hs.server.loadPixels"
+			"address": "hs.server.updatePixels"
 		},
 		{ 
 			"address": "hs.server.setToken"

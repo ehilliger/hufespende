@@ -462,8 +462,23 @@ public class HufeLogic {
 	public Handler<Message<JsonObject>> getLoadPixelsHandler() {
 		return new Handler<Message<JsonObject>>(){
 
+			/**
+			 * Send transient pixels to client.
+			 * 
+			 * @param msg request message
+			 */
 			@Override
 			public void handle(final Message<JsonObject> msg) {
+				JsonObject reply = new JsonObject();
+				reply.putString("status", "ok");
+				reply.putArray("results", new JsonArray());
+				for(Object px : vertx.sharedData().getMap("pxUpdates").values()) {
+					reply.getArray("results").add(new JsonObject(px.toString()));
+				}
+
+				
+				
+				/*
 				JsonObject query = new JsonObject()
 					.putString("action", "find")
 					.putString("collection", "pixels")
@@ -478,14 +493,12 @@ public class HufeLogic {
 						if(reply.body.getString("status").equals("ok")) {
 							
 							// add pxUpdates to results
-							for(Object px : vertx.sharedData().getMap("pxUpdates").values()) {
-								reply.body.getArray("results").add(new JsonObject(px.toString()));
-							}
 						}
 						msg.reply(reply.body);						
 					}
 					
 				});
+				*/
 				
 			}
 			

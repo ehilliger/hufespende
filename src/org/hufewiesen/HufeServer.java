@@ -89,7 +89,7 @@ public class HufeServer extends Verticle {
 		// client event handlers
 		vertx.eventBus().registerHandler("hs.server.submit", logic.getFormSubmitHandler());		
 		vertx.eventBus().registerHandler("hs.server.pxUpdate", logic.getPxUpdateHandler());
-		vertx.eventBus().registerHandler("hs.server.loadPixels", logic.getLoadPixelsHandler());
+		vertx.eventBus().registerHandler("hs.server.updatePixels", logic.getLoadPixelsHandler());
 		
 		// internal event handlers
 		vertx.eventBus().registerHandler("hs.internal.registerToken", logic.getRegisterTokenHandler());

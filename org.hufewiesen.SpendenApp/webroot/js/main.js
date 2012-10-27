@@ -22,7 +22,7 @@ function drawPixels(parent, pixels) {
 
 function computeSelected() {
 	var sum = $(".pxselected").length * 5;
-	$("#donationSum").text("€ " + sum);
+	$("#donationSum").text("��� " + sum);
 }
 
 var eb = null;
@@ -49,15 +49,29 @@ function openEbConn() {
 }
 
 function loadPixels() {
-	eb.send("hs.server.loadPixels", {}, function(reply) {
-		console.log("got db result");
-		if(reply.status === 'ok') {
-			// console.log("reply:\n" + JSON.stringify(reply.results));			
-			drawPixels($("#boughtPixels"), reply.results);
-		} else {
-			console.log("error getting DB entries")
-		}
-	});
+	eb.send("hs.server.updatePixels", {}, createBatchReplyHandler);
+	eb.send("hs.db", {'action':'find', 'collection':'pixels', 'matcher':{}}, createBatchReplyHandler());
+}
+
+function readBatch(reply) {
+	if((reply.status === 'ok') || (reply.status = 'more-exist')) {
+		console.log('loaded pixels: ' + reply.results.length);
+		drawPixels($("#boughtPixels"), reply.results);
+	} else {
+		console.log("error reading pixels: " + reply.status);
+	}
+}
+
+function createBatchReplyHandler() {
+	return function(reply, replier) {
+		// Got some results - process them
+        readBatch(reply);
+        if (reply.status === 'more-exist') {
+        	console.log('reading more...');
+            // Get next batch
+            replier({}, createBatchReplyHandler());
+        }
+	}
 }
 
 function setExpressCheckout() {
@@ -82,7 +96,7 @@ function spendenFormSubmit() {
 	
 	var selectedPixels = $('.pxselected');
 	if(selectedPixels.length == 0) {
-		alert('Sie haben keine Pixel ausgewählt.');
+		alert('Sie haben keine Pixel ausgew��hlt.');
 	} else {
 		selectedPixels.each(function(idx){		
 			msg.pixels.push($(this).data('px'));
