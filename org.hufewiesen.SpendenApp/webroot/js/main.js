@@ -3,6 +3,7 @@
 var session = null;
 
 function drawPixels(parent, pixels) {	
+	var recompute = false;
 	for(i in pixels){
 		var p = pixels[i];
 		if(!(p instanceof Pixel)) {
@@ -11,6 +12,9 @@ function drawPixels(parent, pixels) {
 			if(p.clientId != session && p.state == 'selected') {
 				p.state = 'reserved';
 			}
+			if(p.state == 'selected') {
+				recompute = true;
+			}
 			if(p.visible) {
 				p.draw(parent);
 			} else {
@@ -18,26 +22,26 @@ function drawPixels(parent, pixels) {
 			}
 		}
 	}
+	if(recompute) {
+		computeSelected();
+	}
 }
 
 function computeSelected() {
 	var sum = $(".pxselected").length * 5;
-	$("#donationSum").text("��� " + sum);
+	$("#donationSum").text("€ " + sum);
 }
 
 var eb = null;
 function openEbConn() {
 	if (!eb) {
-		// eb = new vertx.EventBus("http://192.168.178.23:8080/hufedb");
 		eb = new vertx.EventBus("http://192.168.178.23:8080/hufedb");
 		
 		eb.onopen = function() {
 			console.log("EB connected...");
 			eb.registerHandler('hs.client.pxUpdate', function(msg, replyTo) {
-				// console.log('pxreserved: ' + JSON.stringify(msg));
 				drawPixels($('#boughtPixels'), msg.pixels);
 			});
-			// loadPaypalCfg();
 			loadPixels();
 		};
 
@@ -48,14 +52,14 @@ function openEbConn() {
 	}
 }
 
+
 function loadPixels() {
-	eb.send("hs.server.updatePixels", {}, createBatchReplyHandler);
+	eb.send("hs.server.updatePixels", {}, createBatchReplyHandler());
 	eb.send("hs.db", {'action':'find', 'collection':'pixels', 'matcher':{}}, createBatchReplyHandler());
 }
 
 function readBatch(reply) {
 	if((reply.status === 'ok') || (reply.status = 'more-exist')) {
-		console.log('loaded pixels: ' + reply.results.length);
 		drawPixels($("#boughtPixels"), reply.results);
 	} else {
 		console.log("error reading pixels: " + reply.status);
@@ -67,7 +71,6 @@ function createBatchReplyHandler() {
 		// Got some results - process them
         readBatch(reply);
         if (reply.status === 'more-exist') {
-        	console.log('reading more...');
             // Get next batch
             replier({}, createBatchReplyHandler());
         }
@@ -96,7 +99,7 @@ function spendenFormSubmit() {
 	
 	var selectedPixels = $('.pxselected');
 	if(selectedPixels.length == 0) {
-		alert('Sie haben keine Pixel ausgew��hlt.');
+		alert('Sie haben keine Pixel ausgewählt.');
 	} else {
 		selectedPixels.each(function(idx){		
 			msg.pixels.push($(this).data('px'));
@@ -168,8 +171,8 @@ $(document).ready(function() {
 			} else {
 				if(expx.clientId == px.clientId) {
 					// console.log("freeing pixel: " + JSON.stringify(px));
-					px.visible = false;
-					eb.publish('hs.server.pxUpdate', {pixels: [px]});
+					expx.visible = false;
+					eb.publish('hs.server.pxUpdate', {pixels: [expx]});
 				}
 			}	
 		});

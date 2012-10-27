@@ -459,7 +459,7 @@ public class HufeLogic {
 		});
 	}
 	
-	public Handler<Message<JsonObject>> getLoadPixelsHandler() {
+	public Handler<Message<JsonObject>> getUpdatePixelsHandler() {
 		return new Handler<Message<JsonObject>>(){
 
 			/**
@@ -469,37 +469,16 @@ public class HufeLogic {
 			 */
 			@Override
 			public void handle(final Message<JsonObject> msg) {
+				
 				JsonObject reply = new JsonObject();
 				reply.putString("status", "ok");
 				reply.putArray("results", new JsonArray());
 				for(Object px : vertx.sharedData().getMap("pxUpdates").values()) {
 					reply.getArray("results").add(new JsonObject(px.toString()));
 				}
-
-				
-				
-				/*
-				JsonObject query = new JsonObject()
-					.putString("action", "find")
-					.putString("collection", "pixels")
-					.putNumber("batch_size", 1000)
-					.putObject("matcher", new JsonObject());
-				// LOG.info("querying DB: " + query.encode());
-				vertx.eventBus().send("hs.db", query, new Handler<Message<JsonObject>>(){
-
-					@Override
-					public void handle(Message<JsonObject> reply) {
-						// LOG.info("db result: " + reply.body.encode());
-						if(reply.body.getString("status").equals("ok")) {
-							
-							// add pxUpdates to results
-						}
-						msg.reply(reply.body);						
-					}
-					
-				});
-				*/
-				
+				LOG.info("update pixels message:" + reply.encode());
+				msg.reply(reply);
+								
 			}
 			
 		};
