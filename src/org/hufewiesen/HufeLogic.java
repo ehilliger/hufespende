@@ -5,7 +5,10 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
@@ -13,8 +16,10 @@ import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientRequest;
 import org.vertx.java.core.http.HttpClientResponse;
+import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
+
 
 
 public class HufeLogic {
@@ -58,6 +63,8 @@ public class HufeLogic {
 					return;
 				}
 				
+				long timestamp = System.currentTimeMillis();
+				
 				JsonArray savedPxIds = new JsonArray();
 				for(DBPixel px : pixels) {
 					px.setName(name);
@@ -65,6 +72,7 @@ public class HufeLogic {
 					px.setMessage(message);
 					px.setUrl(url);
 					px.setState("reserved");
+					px.setTimestamp(timestamp);
 					
 					LOG.info("saving pixel: " + px.encode());
 					JsonObject saveMsg = new JsonObject()
@@ -100,6 +108,7 @@ public class HufeLogic {
 					.putString("email", email)
 					.putNumber("qty", qty)
 					.putNumber("amt", amt)
+					.putNumber("timestamp", timestamp)
 					.putArray("pixelIds", savedPxIds);
 				
 				// get PaypalToken
@@ -133,7 +142,7 @@ public class HufeLogic {
 							
 							// and save a DB TXN record
 							txnRecord.putString("token", token);
-							txnRecord.putString("state", "SetExpressCheckout");
+							txnRecord.putString("state", "GetToken");
 							
 							JsonObject saveTxnMsg = new JsonObject()
 								.putString("action", "save")
@@ -165,7 +174,7 @@ public class HufeLogic {
 	
 
 	
-	public Handler<Message<JsonObject>> getPxUpdateHanlder() {
+	public Handler<Message<JsonObject>> getPxUpdateHandler() {
 		return new Handler<Message<JsonObject>>(){
 
 			@Override
@@ -226,6 +235,51 @@ public class HufeLogic {
 		};
 	}
 	
+	/**
+	 * Register a token when received from PayPal. Set status of transaction record
+	 * to SetExpressCheckout
+	 * @return the vertx event bus handler
+	 */
+	public Handler<Message<JsonObject>> getRegisterTokenHandler() {
+		return new Handler<Message<JsonObject>>() {
+
+			@Override
+			public void handle(Message<JsonObject> msg) {
+				final String token = msg.body.getString("token");
+				final String payerId = msg.body.getString("payerId");
+				
+				LOG.info("register token: " + token);
+
+				// find the txrecord
+				JsonObject query = new JsonObject()
+					.putString("action", "findone")
+					.putString("collection", "transactions")
+					.putObject("matcher", new JsonObject()
+							.putString("token", token));
+				vertx.eventBus().send("hs.db", query, new Handler<Message<JsonObject>>(){
+
+					/**
+					 * update state to SetExpressCheckout
+					 * @param arg0
+					 */
+					@Override
+					public void handle(Message<JsonObject> dbResult) {
+						if("ok".equals(dbResult.body.getString("status"))) {
+							final JsonObject txRecord = dbResult.body.getObject("result");
+							txRecord.putString("state", "SetExpressCheckout");
+							txRecord.putString("payerId", payerId);
+							LOG.info("updating tx record for token: " + token + " to SetExpressCheckout");
+							
+							vertx.eventBus().send("hs.db", new JsonObject()
+								.putString("action", "save")
+								.putString("collection", "transactions")
+								.putObject("document", txRecord));
+						}						
+					}					
+				});				
+			}			
+		};
+	}
 	
 	public Handler<Long> getBuyerInfoTxHandler() {
 		return new Handler<Long>() {
@@ -236,7 +290,10 @@ public class HufeLogic {
 					.putString("action", "findone")
 					.putString("collection", "transactions")
 					.putObject("matcher", new JsonObject()
-							.putString("state", "SetExpressCheckout"));
+						.putString("state", "SetExpressCheckout")
+					);
+				
+				
 				// query
 				vertx.eventBus().send("hs.db", query, new Handler<Message<JsonObject>>(){
 
@@ -410,6 +467,7 @@ public class HufeLogic {
 				JsonObject query = new JsonObject()
 					.putString("action", "find")
 					.putString("collection", "pixels")
+					.putNumber("batch_size", 1000)
 					.putObject("matcher", new JsonObject());
 				// LOG.info("querying DB: " + query.encode());
 				vertx.eventBus().send("hs.db", query, new Handler<Message<JsonObject>>(){
@@ -433,4 +491,5 @@ public class HufeLogic {
 			
 		};
 	}
+	
 }

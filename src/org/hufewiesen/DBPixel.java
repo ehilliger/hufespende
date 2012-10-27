@@ -70,6 +70,14 @@ public class DBPixel extends JsonObject {
 		putString("url", url);
 	}
 	
+	public long getTimestamp() {
+		return getLong("timestamp");		
+	}
+	
+	public void setTimestamp(long timestamp) {
+		putNumber("timestamp", timestamp);
+	}
+	
 	public String getId() {
 		return getString("_id");
 	}

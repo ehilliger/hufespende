@@ -39,6 +39,7 @@ public class HufeServer extends Verticle {
 		server.requestHandler(new Handler<HttpServerRequest>() {
 			@Override
 			public void handle(HttpServerRequest req) {
+				// session handling
 				Cookie sessionCookie = null;
 				String cookieHeader = req.headers().get("Cookie");
 				if(cookieHeader != null) {
@@ -49,7 +50,6 @@ public class HufeServer extends Verticle {
 							break;
 						}
 					}
-
 				}
 				// create a session if needed
 				if(sessionCookie == null) {
@@ -58,6 +58,18 @@ public class HufeServer extends Verticle {
 					ce.addCookie(SESSION_COOKIE, sessionId);
 					req.response.headers().put("Set-Cookie", ce.encode());
 				}
+				
+				// if this request is coming from Paypal, update tx record status
+				if(req.params().containsKey("token")) {
+					String token = req.params().get("token");
+					String payerId = req.params().get("payerId");
+					vertx.eventBus().publish("hs.intern.registerToken", new JsonObject()
+						.putString("token", req.params().get("token"))
+						.putString("payerId", req.params().get("p[ayerId"))
+					);
+				}
+				
+				
 				LOG.info("request: " + req.path);
 				if(req.path.equals("/")) {
 					req.response.sendFile("webroot/index.html");
@@ -74,13 +86,17 @@ public class HufeServer extends Verticle {
 				config.getArray("sockJS_outbound")
 		);
 		
-
+		// client event handlers
 		vertx.eventBus().registerHandler("hs.server.submit", logic.getFormSubmitHandler());		
-		vertx.eventBus().registerHandler("hs.server.pxUpdate", logic.getPxUpdateHanlder());
+		vertx.eventBus().registerHandler("hs.server.pxUpdate", logic.getPxUpdateHandler());
 		vertx.eventBus().registerHandler("hs.server.loadPixels", logic.getLoadPixelsHandler());
 		
+		// internal event handlers
+		vertx.eventBus().registerHandler("hs.internal.registerToken", logic.getRegisterTokenHandler());
+		
+		// periodic event handlers
 		vertx.setPeriodic(1000, logic.getPxUpdateCleanup());
-		vertx.setPeriodic(120000, logic.getBuyerInfoTxHandler());
+		vertx.setPeriodic(5000, logic.getBuyerInfoTxHandler());
 		vertx.setPeriodic(5000, logic.getCapturePaymentTxHandler());
 		
 		server.listen(8080);

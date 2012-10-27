@@ -29,7 +29,7 @@ var eb = null;
 function openEbConn() {
 	if (!eb) {
 		// eb = new vertx.EventBus("http://192.168.178.23:8080/hufedb");
-		eb = new vertx.EventBus("http://localhost:8080/hufedb");
+		eb = new vertx.EventBus("http://192.168.178.23:8080/hufedb");
 		
 		eb.onopen = function() {
 			console.log("EB connected...");
@@ -60,13 +60,13 @@ function loadPixels() {
 	});
 }
 
-function loadPaypalCfg() {
-	eb.send("hs.server.paypalCfg", {test:"test"}, function(reply) {		
-		var token = reply.token;
-		// console.log("paypal token: " + token);
-		$("#spendenform").attr("action", reply.checkoutUrl);
+function setExpressCheckout() {
+	var token = location.search.replace(/.*token=(.*)&.*/, "$1");
+	if(token && token != "") {
+		console.log("sending token update");
+		eb.send(hs.server.setToken, {clientId: session, token: token});
 		
-	});
+	}
 }
 
 function spendenFormSubmit() {
@@ -188,14 +188,14 @@ $(document).ready(function() {
 	
 	$('#spendenform').validated(spendenFormSubmit);
 	
-	$("#paypalDiv").dialog({
+	$("#thankyouDiv").dialog({
         modal: true,
         autoOpen: false,
-        height: '400',
-        width: '500',
+        height: '300',
+        width: '400',
         draggable: true,
         resizeable: true,   
-        title: 'Bezahlen mit Paypal'
+        title: 'Dankeschön'
     });
 	
 	
