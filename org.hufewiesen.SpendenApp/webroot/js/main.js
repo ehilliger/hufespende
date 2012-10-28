@@ -40,6 +40,7 @@ function openEbConn() {
 		eb.onopen = function() {
 			console.log("EB connected...");
 			eb.registerHandler('hs.client.pxUpdate', function(msg, replyTo) {
+				console.log("pxUpdate: " + JSON.stringify(msg));
 				drawPixels($('#boughtPixels'), msg.pixels);
 			});
 			eb.registerHandler('hs.client.txUpdate', updateTxSum);
@@ -266,7 +267,7 @@ function Pixel(json) {
 				pxDiv = $("<div id='" + this._id + "'/>");
 				$(parent).append(pxDiv);
 			}
-			pxDiv.removeClass("pxselected pxbought pxreserverd")
+			pxDiv.removeClass("pxselected pxbought pxreserved")
 				.addClass("px" + this.state)
 				.css("left", this.getCssX())
 				.css("top", this.getCssY())

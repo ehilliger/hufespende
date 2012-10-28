@@ -60,12 +60,14 @@ public class HufeServer extends Verticle {
 				}
 				
 				// if this request is coming from Paypal, update tx record status
+				LOG.info("request parameters: " + req.params());
 				if(req.params().containsKey("token")) {
 					String token = req.params().get("token");
 					String payerId = req.params().get("payerId");
-					vertx.eventBus().publish("hs.intern.registerToken", new JsonObject()
-						.putString("token", req.params().get("token"))
-						.putString("payerId", req.params().get("p[ayerId"))
+					LOG.info("got token request: " + token);
+					vertx.eventBus().publish("hs.internal.registerToken", new JsonObject()
+						.putString("token", token)
+						.putString("payerId", payerId)
 					);
 				}
 				

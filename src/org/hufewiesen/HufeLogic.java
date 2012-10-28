@@ -1,26 +1,17 @@
 package org.hufewiesen;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
-import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.eventbus.Message;
-import org.vertx.java.core.http.HttpClient;
-import org.vertx.java.core.http.HttpClientRequest;
-import org.vertx.java.core.http.HttpClientResponse;
-import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
-
-import com.sun.org.apache.bcel.internal.generic.PUTSTATIC;
 
 
 
@@ -134,37 +125,41 @@ public class HufeLogic {
 					,new Handler<JsonObject>(){
 						@Override
 						public void handle(JsonObject paypalResponse) {
-							final String token = paypalResponse.getString("TOKEN");
-							
-							LOG.info("received PaypalToken: " + token);
-							
-							final JsonObject submitReply = new JsonObject()
-								.putString("token", token)
-								.putString("checkoutUrl", paypalConnector.getCheckoutUrl(token));
-							
-							// and save a DB TXN record
-							txnRecord.putString("token", token);
-							txnRecord.putString("state", "GetToken");
-							
-							JsonObject saveTxnMsg = new JsonObject()
-								.putString("action", "save")
-								.putString("collection", "transactions")
-								.putObject("document", txnRecord);
-							
-							LOG.info("saving paypal transaction: " + saveTxnMsg.encode());
-							vertx.eventBus().send("hs.db", saveTxnMsg, new Handler<Message<JsonObject>>(){
-
-								@Override
-								public void handle(Message<JsonObject> txnReply) {
-									if("ok".equals(txnReply.body.getString("status"))) {
-										submitReply.putString("status", "ok");
-										// and send back to client
-										submitMsg.reply(submitReply);
+							try {
+								final String token = URLDecoder.decode(paypalResponse.getString("TOKEN"), "UTF-8");
+								
+								LOG.info("received PaypalToken: " + token);
+								
+								final JsonObject submitReply = new JsonObject()
+									.putString("token", token)
+									.putString("checkoutUrl", paypalConnector.getCheckoutUrl(token));
+								
+								// and save a DB TXN record
+								txnRecord.putString("token", token);
+								txnRecord.putString("state", "GetToken");
+								
+								JsonObject saveTxnMsg = new JsonObject()
+									.putString("action", "save")
+									.putString("collection", "transactions")
+									.putObject("document", txnRecord);
+								
+								LOG.info("saving paypal transaction: " + saveTxnMsg.encode());
+								vertx.eventBus().send("hs.db", saveTxnMsg, new Handler<Message<JsonObject>>(){
+	
+									@Override
+									public void handle(Message<JsonObject> txnReply) {
+										if("ok".equals(txnReply.body.getString("status"))) {
+											submitReply.putString("status", "ok");
+											// and send back to client
+											submitMsg.reply(submitReply);
+										}
+										
 									}
 									
-								}
-								
-							});
+								});
+							} catch (UnsupportedEncodingException e) {
+								LOG.log(Level.SEVERE, "unsupported encoding: " + e.getMessage(), e);								
+							}
 							
 							
 						}
@@ -252,12 +247,13 @@ public class HufeLogic {
 				
 				LOG.info("register token: " + token);
 
-				// find the txrecord
+				// find the txrecord and advance to SetExpressCheckout
 				JsonObject query = new JsonObject()
 					.putString("action", "findone")
 					.putString("collection", "transactions")
 					.putObject("matcher", new JsonObject()
-							.putString("token", token));
+							.putString("token", token)
+							.putString("state", "GetToken"));
 				vertx.eventBus().send("hs.db", query, new Handler<Message<JsonObject>>(){
 
 					/**
@@ -453,7 +449,9 @@ public class HufeLogic {
 					}
 					
 					// tell clients
-					vertx.eventBus().publish("hs.client.pxUpdate", new JsonObject().putArray("pixels", updatedPixels));					
+					JsonObject pxUpdateResponse = new JsonObject().putArray("pixels", updatedPixels);
+					LOG.info("sending captured pixels to clients: " + pxUpdateResponse.encode());
+					vertx.eventBus().publish("hs.client.pxUpdate", pxUpdateResponse);					
 				}
 				
 			}
