@@ -40,7 +40,6 @@ function openEbConn() {
 		eb.onopen = function() {
 			console.log("EB connected...");
 			eb.registerHandler('hs.client.pxUpdate', function(msg, replyTo) {
-				console.log("pxUpdate: " + JSON.stringify(msg));
 				drawPixels($('#boughtPixels'), msg.pixels);
 			});
 			eb.registerHandler('hs.client.txUpdate', updateTxSum);

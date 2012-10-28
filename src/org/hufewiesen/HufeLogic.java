@@ -448,10 +448,18 @@ public class HufeLogic {
 						updatedPixels.add(px);
 					}
 					
-					// tell clients
+					// tell clients about green pixels
 					JsonObject pxUpdateResponse = new JsonObject().putArray("pixels", updatedPixels);
-					LOG.info("sending captured pixels to clients: " + pxUpdateResponse.encode());
-					vertx.eventBus().publish("hs.client.pxUpdate", pxUpdateResponse);					
+					vertx.eventBus().publish("hs.client.pxUpdate", pxUpdateResponse);
+					
+					// update clients total sum
+					querySoldPixelSum(new Handler<Message<JsonObject>>(){@Override
+					public void handle(Message<JsonObject> result) {
+						if("ok".equals(result.body.getString("status"))) {
+							vertx.eventBus().publish("hs.client.txUpdate", result.body);
+						}						
+					}});
+					
 				}
 				
 			}
@@ -463,26 +471,27 @@ public class HufeLogic {
 		return new Handler<Message<JsonObject>>() {
 			@Override
 			public void handle(final Message<JsonObject> requestMsg) {
-				final JsonObject reply = new JsonObject();
-				JsonObject query = new JsonObject()
-					.putString("action", "count")
-					.putString("collection", "pixels")
-					.putObject("matcher", new JsonObject()
-							.putString("state", "bought"));
-				
-				LOG.info("sending total txSum query: " + query.encode());
-				vertx.eventBus().send("hs.db", query, new Handler<Message<JsonObject>>() {
+				querySoldPixelSum(new Handler<Message<JsonObject>>() {
 					@Override
 					public void handle(Message<JsonObject> result) {
 						if("ok".equals(result.body.getString("status"))) {
-							LOG.info("total count bought pixels: " + result.body.encode());
-							reply.putNumber("count", result.body.getNumber("count"));
-							requestMsg.reply(reply);
+							requestMsg.reply(result.body);
 						}						
 					}
 				});
 			}
 		};
+	}
+	
+	private void querySoldPixelSum(Handler<Message<JsonObject>> handler) {
+		JsonObject query = new JsonObject()
+		.putString("action", "count")
+		.putString("collection", "pixels")
+		.putObject("matcher", new JsonObject()
+				.putString("state", "bought"));
+	
+		// LOG.info("sending total txSum query: " + query.encode());
+		vertx.eventBus().send("hs.db", query, handler);
 	}
 	
 	public Handler<Message<JsonObject>> getUpdatePixelsHandler() {
