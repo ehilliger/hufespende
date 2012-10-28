@@ -12,11 +12,16 @@
 .pxhover {
 	display: none;
 	position: absolute;
-	background-color: #df8;
-	opacity: 0.6;
+	background-color: whiteSmoke;
+	opacity: 0.8;
 	width: 250px;
 	height: 120px;
 	padding: 10px;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	-webkit-box-shadow: 1px 1px 3px 0px #333;
+	box-shadow: 1px 1px 3px 0px #333;
 }
 
 .pxbought {

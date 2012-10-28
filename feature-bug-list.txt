@@ -12,9 +12,9 @@ Bugs:
 - DB backup
 - Adresse in TxRecord abspeichern
 - Batch-Size / Limit 							(done)
-- Token confirm
+- Token confirm									(done)
 - Pixel außerhalb Bild möglich
-- Spenden Summe			
+- Spenden Summe									(done)
 - Spendenbetrag									(done)
 - Teilnahmebedingungen anstatt AGB
 - Paypal Logo anstatt des Spenden-Button
