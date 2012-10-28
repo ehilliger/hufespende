@@ -20,6 +20,8 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
+import com.sun.org.apache.bcel.internal.generic.PUTSTATIC;
+
 
 
 public class HufeLogic {
@@ -457,6 +459,32 @@ public class HufeLogic {
 			}
 			
 		});
+	}
+	
+	public Handler<Message<JsonObject>> getTxSumHandler() {
+		return new Handler<Message<JsonObject>>() {
+			@Override
+			public void handle(final Message<JsonObject> requestMsg) {
+				final JsonObject reply = new JsonObject();
+				JsonObject query = new JsonObject()
+					.putString("action", "count")
+					.putString("collection", "pixels")
+					.putObject("matcher", new JsonObject()
+							.putString("state", "bought"));
+				
+				LOG.info("sending total txSum query: " + query.encode());
+				vertx.eventBus().send("hs.db", query, new Handler<Message<JsonObject>>() {
+					@Override
+					public void handle(Message<JsonObject> result) {
+						if("ok".equals(result.body.getString("status"))) {
+							LOG.info("total count bought pixels: " + result.body.encode());
+							reply.putNumber("count", result.body.getNumber("count"));
+							requestMsg.reply(reply);
+						}						
+					}
+				});
+			}
+		};
 	}
 	
 	public Handler<Message<JsonObject>> getUpdatePixelsHandler() {

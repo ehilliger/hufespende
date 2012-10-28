@@ -45,6 +45,9 @@
 		},
 		{ 
 			"address": "hs.server.setToken"
+		},
+		{
+			"address": "hs.server.txSum"
 		}
 	],
 	

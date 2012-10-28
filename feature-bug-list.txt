@@ -11,11 +11,11 @@ Features:
 Bugs:
 - DB backup
 - Adresse in TxRecord abspeichern
-- Batch-Size / Limit
+- Batch-Size / Limit 							(done)
 - Token confirm
 - Pixel außerhalb Bild möglich
-- Spenden Summe
-- Spendenbetrag
+- Spenden Summe			
+- Spendenbetrag									(done)
 - Teilnahmebedingungen anstatt AGB
 - Paypal Logo anstatt des Spenden-Button
 - Link zu Paypal Registrierung

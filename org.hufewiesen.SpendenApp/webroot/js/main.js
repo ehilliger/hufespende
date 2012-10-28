@@ -42,6 +42,7 @@ function openEbConn() {
 			eb.registerHandler('hs.client.pxUpdate', function(msg, replyTo) {
 				drawPixels($('#boughtPixels'), msg.pixels);
 			});
+			eb.registerHandler('hs.client.txUpdate', updateTxSum);
 			loadPixels();
 		};
 
@@ -52,10 +53,14 @@ function openEbConn() {
 	}
 }
 
+function updateTxSum(reply) {
+	$('#totalSum').text('€ ' + reply.count * 5);
+}
 
 function loadPixels() {
 	eb.send("hs.server.updatePixels", {}, createBatchReplyHandler());
 	eb.send("hs.db", {'action':'find', 'collection':'pixels', 'matcher':{}}, createBatchReplyHandler());
+	eb.send("hs.server.txSum", {}, updateTxSum);
 }
 
 function readBatch(reply) {

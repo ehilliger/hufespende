@@ -27,7 +27,7 @@ public class HufeServer extends Verticle {
 		LOG.info("configuration: " + config);
 		LOG.info("test:" + config.getString("test"));
 		
-		container.deployModule("vertx.mongo-persistor-v1.0", config.getObject("mongodb"));
+		container.deployModule("vertx.mongo-persistor-v1.2", config.getObject("mongodb"));
 		
 		PaypalConnector paypalConnector = new PaypalConnector(config.getObject("paypal"), container, vertx);
 		
@@ -90,6 +90,7 @@ public class HufeServer extends Verticle {
 		vertx.eventBus().registerHandler("hs.server.submit", logic.getFormSubmitHandler());		
 		vertx.eventBus().registerHandler("hs.server.pxUpdate", logic.getPxUpdateHandler());
 		vertx.eventBus().registerHandler("hs.server.updatePixels", logic.getUpdatePixelsHandler());
+		vertx.eventBus().registerHandler("hs.server.txSum", logic.getTxSumHandler());
 		
 		// internal event handlers
 		vertx.eventBus().registerHandler("hs.internal.registerToken", logic.getRegisterTokenHandler());
