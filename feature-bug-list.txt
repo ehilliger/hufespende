@@ -19,6 +19,7 @@ Bugs:
 - Teilnahmebedingungen anstatt AGB
 - Paypal Logo anstatt des Spenden-Button
 - Link zu Paypal Registrierung
+- Fix Info Box (design / Infos)					(done)
 
 zur Info:
 aktueller Fortschritt zu sehen unter:

@@ -141,7 +141,14 @@ $(document).ready(function() {
 	$("#map").append(""
 		+ "<div id='pixelCursor' class='pxcursor'></div>"
 		+ "<div id='boughtPixels'></div>"
-		+ "<div id='hoverDiv' class='pxhover'><h3 id='hoverState'>Gespendet durch</h3><p id='hoverName'></p></div>"
+		+ "<div id='hoverDiv' class='pxhover'>" 
+		+	"<h3>"
+		+		"<span id='hoverState'>Gespendet durch </span>"
+		+		"<span id='hoverName'></span>"
+		+ 	"</h3>"
+		+ 	"<p id='hoverMsg'></p>"
+		+ 	"<p><a id='hoverLink'></a></p>"
+		+ "</div>"
 	).mouseover(function() {
 		$('#pixelCursor').show();
 		$("#map").mousemove(function (evt){
@@ -275,14 +282,27 @@ function Pixel(json) {
 					var state = $(this).data('px').state;
 					var name = $(this).data('px').name;
 					if(state == 'reserved' && name && name.length > 0) {
-						$("#hoverDiv h3#hoverState").text("Reserviert durch:");
+						$("#hoverDiv #hoverState").text("Reserviert durch: ");
 					} else if(state === 'bought') {
-						$("#hoverDiv h3#hoverState").text("Gespendet durch:");
+						$("#hoverDiv #hoverState").text("Gespendet durch: ");
 					} else {
-						$("#hoverDiv h3#hoverState").text("Reserviert");
+						$("#hoverDiv #hoverState").text("Reserviert ");
 					}
 					
-					$("#hoverDiv p#hoverName").text($(this).data("px").name);
+					$("#hoverDiv #hoverName").text($(this).data("px").name);
+					if($(this).data("px").message) {
+						$("#hoverDiv #hoverMsg").text($(this).data("px").message);
+					} else {
+						$("#hoverDiv #hoverMsg").text("");
+					}
+					if($(this).data("px").url) {
+						$("#hoverDiv #hoverLink")
+							.text($(this).data("px").url)
+							.attr("href", $(this).data("px").url);
+						
+					} else {
+						$("#hoverDiv #hoverLink").text("").attr("href", "");
+					}
 					$("#hoverDiv")
 						.css("left", $(this).css("left")).css("left", "+=25")
 						.css("top", $(this).css("top")).css("top", "-=25")
